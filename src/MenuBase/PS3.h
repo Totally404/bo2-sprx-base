@@ -1,4 +1,10 @@
-//Sony
+#include <cellstatus.h>
+#include <sys/prx.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdarg.h>
+#include <stddef.h>
+#include <string.h>
 #include <sys/prx.h>
 #include <sys/syscall.h>
 #include <sys/ppu_thread.h>
@@ -7,30 +13,16 @@
 #include <sys/process.h>
 #include <sys/memory.h>
 #include <sys/timer.h>
-#include <sys/return_code.h>
-#include <sys/prx.h>
-#include <sys/paths.h>
+#include <sys/types.h>
+#include <math.h>
+#include <fastmath.h>
 #include <cellstatus.h>
-#include <cell/error.h>
-#include <string.h>
-
-//C-Headers (converted)
-#include <cstdio>
-#include <cstdlib>
-#include <cwchar>
-#include <cstdarg>
-#include <cassert>
-#include <cstddef>
-#include <cmath>
-#include <ctime>
-
-//C++ Std Lib
-#include <typeinfo>
-#include <vector>
-
-//C-Headers
-#include <pthread.h>
-#include <locale.h>
+#include <sys/timer.h>
+#include <cell/sysmodule.h>
+#include <sys/random_number.h>
+#include <ppu_intrinsics.h>
+#include <spu_printf.h>
+#include <ctype.h>
 
 
 struct opd_s
@@ -59,6 +51,11 @@ int console_write(const char * s)
 	return_to_user_prog(int);
 }
 
+int32_t write_process(uint64_t ea, const void * data, uint32_t size)
+{
+	system_call_4(905, (uint64_t)sys_process_getpid(), ea, size, (uint64_t)data);
+	return_to_user_prog(int32_t);
+}
 
 sys_ppu_thread_t create_thread(void (*entry)(uint64_t), int priority, size_t stacksize, const char* threadname, sys_ppu_thread_t tid)
 {	
@@ -165,3 +162,82 @@ namespace PS3
 		return ReturnRead[strcount].returnRead;
 	}
 };
+
+extern "C" {
+	int _sys_printf(const char *fmt, ...);
+	int _sys_snprintf(char *, size_t, const char*, ...);
+	int _sys_sprintf(char *, const char*, ...);
+	void* _sys_malloc(size_t size);
+	void _sys_free(void *ptr);
+}
+
+#define printf _sys_printf
+#define snprintf _sys_snprintf
+#define sprintf _sys_sprintf
+#define malloc _sys_malloc
+#define free _sys_free
+
+
+//Hook Functions
+int Memcpy(void* destination, const void* source, size_t size)
+{
+	system_call_4(905, (uint64_t)sys_process_getpid(), (uint64_t)destination, size, (uint64_t)source);
+	__dcbst(destination);
+	__sync();
+	__isync();
+	return_to_user_prog(int);
+}
+void PatchInJump(int Address, int Destination)
+{
+	int FuncBytes[4];
+	Destination = *(int*)Destination;
+	FuncBytes[0] = 0x3D600000 + ((Destination >> 16) & 0xFFFF);
+	if (Destination & 0x8000) FuncBytes[0] += 1;
+	FuncBytes[1] = 0x396B0000 + (Destination & 0xFFFF);
+	FuncBytes[2] = 0x7D6903A6;
+	FuncBytes[3] = 0x4E800420;
+	Memcpy((void*)Address, FuncBytes, 4 * 4);
+}
+void patcher(int Address, int Destination, bool Linked)
+{
+	int FuncBytes[4];
+	Destination = *(int *)Destination;
+	FuncBytes[0] = 0x3D600000 + ((Destination >> 16) & 0xFFFF);
+	if (Destination & 0x8000)
+		FuncBytes[0] += 1;
+	FuncBytes[1] = 0x396B0000 + (Destination & 0xFFFF); // addi    %r11, %r11, dest&0xFFFF
+	FuncBytes[2] = 0x7D6903A6; // mtctr    %r11
+	FuncBytes[3] = 0x4E800420; // bctr
+	if (Linked)
+		FuncBytes[3] += 1; // bctrl
+	Memcpy((void*)Address, FuncBytes, 4 * 4);
+}
+void hookFunctionStart(int Address, int saveStub, int Destination)
+{
+	saveStub = *(int*)saveStub;
+	int BranchtoAddress = Address + (4 * 4);
+	int StubData[8];
+	StubData[0] = 0x3D600000 + ((BranchtoAddress >> 16) & 0xFFFF);
+	if (BranchtoAddress & 0x8000) StubData[0] += 1;
+	StubData[1] = 0x396B0000 + (BranchtoAddress & 0xFFFF);
+	StubData[2] = 0x7D6903A6;
+	Memcpy(&StubData[3], (void*)Address, 4 * 4);
+	StubData[7] = 0x4E800420;
+	Memcpy((void*)saveStub, StubData, 8 * 4);
+	PatchInJump(Address, Destination);
+}
+
+//Create Thread
+sys_ppu_thread_t id;
+sys_ppu_thread_t create_thread(void(*entry)(uint64_t), int priority, size_t stacksize, const char* threadname)
+{
+	if (sys_ppu_thread_create(&id, entry, 0, priority, stacksize, 0, threadname) != CELL_OK)
+	{
+		console_write("Thread creation failed\n");
+	}
+	else
+	{
+		console_write("Thread created\n");
+	}
+	return id;
+}
