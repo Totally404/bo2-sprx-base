@@ -14,11 +14,14 @@ int R_RegisterFont_a[2] = { Addresses::R_RegisterFont, TOC };
 int R_AddCmdDrawTextInternal_a[2] = { Addresses::R_AddCmdDrawText, TOC };
 int Material_RegisterHandle_a[2] = { Addresses::Material_RegisterHandle, TOC };
 int R_AddCmdDrawStretchPicInternal_a[2] = { Addresses::R_AddCmdDrawStretchPic, TOC };
+int R_TextWidth_t[2] = { 0x0075A338, TOC };
 
 void*(*R_RegisterFont)(const char * name, int imageTrack) = (void*(*)(const char*, int))&R_RegisterFont_a;
 void(*R_AddCmdDrawText)(const char* text, int maxChars, void* font, float x, float y, float yScale, float xScale, float rotation, float* colors, int Style) = (void(*)(const char*, int, void*, float, float, float, float, float, float*, int))&R_AddCmdDrawTextInternal_a;
 void*(*Material_RegisterHandle)(const char *name, int imageTrack, bool errorIfMissing, int waitTime) = (void*(*)(const char*, int, bool, int))&Material_RegisterHandle_a;
 void(*R_AddCmdDrawStretchPic)(float x, float y, float w, float h, float s0, float t0, float s1, float t1, float* color, void *material) = (void(*)(float, float, float, float, float, float, float, float, float*, void*))&R_AddCmdDrawStretchPicInternal_a;
+int(*R_TextWidth)(int localClientNum, const char *text, int maxChars, void *font) = (int(*)(int localClientNum, const char *text, int maxChars, void *font))&R_TextWidth_t;
+
 
 int Cbuff_AddText_t[2] = { 0x313C18, TOC };
 int Dvar_GetBool_a[2] = { 0x3DA948, TOC };

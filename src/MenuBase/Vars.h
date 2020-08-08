@@ -81,6 +81,7 @@ void setVars() {
 
 	menu.optionSpacing = 0.04;
 	menu.optionPadding = 0.01;
+	menu.optionFontSize = 0.7;
 
 	menu.subDepth = 0;
 	menu.framesPassed = 0;
