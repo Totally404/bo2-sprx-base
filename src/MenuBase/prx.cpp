@@ -19,9 +19,10 @@ void paintHook(int x, int xx) {
 	screen.width = *(short*)(0xD933D4);//Width
 	screen.height = *(short*)(0xD933D6);//Height
 
-	char buffer[1000];
-	sprintf(buffer, "Width: %i\nHeight: %i\n\nShort width: %i\nShort height: %i\n\n\n", screen.width, screen.height, *(short*)0xD933D4, *(short*)0xD933D6);
-	console_write(buffer);
+	if (game.inGame != isInGame()) joiningLeavingGame();
+	game.inGame = isInGame();
+
+	constRun();
 
 	if (menu.open) {
 		doMenu();
@@ -32,14 +33,24 @@ void paintHook(int x, int xx) {
 			if (detect(UP)) {
 				scrollUp();
 			}
-			if (detect(DOWN)) {
+			else if (detect(DOWN)) {
 				scrollDown();
 			}
-			if (isInGame() && detect(LEFT) || !isInGame() && detect(L2)) {
-				back();
+			else if (isInGame() && detect(LEFT) || !isInGame() && detect(L2)) {
+				if (optionType == FloatOption) {
+					floatOptionMinus();
+				}
+				else {
+					back();
+				}
 			}
-			if (isInGame() && detect(RIGHT) || !isInGame() && detect(R2)) {
-				select();
+			else if (isInGame() && detect(RIGHT) || !isInGame() && detect(R2)) {
+				if (optionType == FloatOption) {
+					floatOptionAdd();
+				}
+				else {
+					select();
+				}
 			}
 			if (detect(R3)) {
 				close();
@@ -62,9 +73,32 @@ extern "C" int _MenuBase_export_function(void)
     return CELL_OK;
 }
 
-extern "C" int _MenuBase_prx_entry(void)
-{
+sys_ppu_thread_t MainThread;
+
+void Thread(uint64_t nothing) {
+	
+	sleep(10000);
+	console_write("Loaded");
 	setVars();
 	hookFunctionStart((int)0x3971A0, (int)Menu_PaintAll_Stub, (int)paintHook);
+	while (true) {
+		if (keyboardOpened) {
+			char output[1024];
+			Keyboard::oskdialog_mode = Keyboard::MODE_OPEN;
+			while (Keyboard::oskdialog_mode != Keyboard::MODE_EXIT)
+			{
+				Keyboard::keyboard(output, "", "Insert Text");
+			}
+			keyboardFunction(output);
+			keyboardOpened = false;
+		}
+		sleep(0.05);
+	}
+	sys_ppu_thread_exit(nothing);
+}
+
+extern "C" int _MenuBase_prx_entry(void)
+{
+	sys_ppu_thread_create(&MainThread, Thread, 0, 0x4AA, 0x7000, 0, "Main Thread");
     return SYS_PRX_RESIDENT;
 }

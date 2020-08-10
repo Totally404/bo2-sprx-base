@@ -1,4 +1,25 @@
-void doNothing(){}
+void constRun() {
+
+	if (options.grid) {
+		for (float x = 0; x < 1; x+= 0.1) {
+			drawShader(x, 0, 0.001, 1, White);
+		}
+		for (float y = 0; y < 1; y += 0.1) {
+			drawShader(0, y, 1, 0.001, White);
+		}
+		
+		for (float x = 0; x < 1; x += 0.025) {
+			drawShader(x, 0, 0.001, 1, LightWhite);
+		}
+		for (float y = 0; y < 1; y += 0.025) {
+			drawShader(0, y, 1, 0.001, LightWhite);
+		}
+	}
+
+	if (options.fov != 65) {
+		*(float*)0x1CC5218 = options.fov;
+	}
+}
 
 //gets value from memory rather than a variable so it is always updated, even after changing in an rtm
 bool redBoxesBool() {;
@@ -16,3 +37,53 @@ void toggleRedBoxes() {
 	}
 }
 
+//Designer
+void toggleGrid() { options.grid = !options.grid; }
+void menuXPlus() {
+	menu.x += 0.005;
+}
+void menuXMinus() {
+	menu.x -= 0.005;
+}
+void menuYPlus() {
+	menu.y += 0.005 * 16/9;
+}
+void menuYMinus() {
+	menu.y -= 0.005 * 16 / 9;
+}
+void menuWidthPlus() {
+	menu.width += 0.005;
+}
+void menuWidthMinus() {
+	menu.width -= 0.005;
+}
+void menuHeightPlus() {
+	menu.height += 0.005;
+}
+void menuHeightMinus() {
+	menu.height -= 0.005;
+}
+void menuOptionSpacingPlus() {
+	menu.optionSpacing += 0.001;
+}
+void menuOptionSpacingMinus() {
+	menu.optionSpacing -= 0.001;
+}
+void fontSizePlus() {
+	menu.optionFontSize += 0.1;
+}
+void fontSizeMinus() {
+	menu.optionFontSize -= 0.1;
+}
+
+void openKeyboard(void(*f)(char*)) {
+	keyboardOpened = true;
+	keyboardFunction = f;
+}
+void setName(char* name) {
+	strcpy((char*)0x026C067F, name);
+	strcpy((char*)0x026C0658, name);
+}
+void openNameKeyboard() {
+	openKeyboard(setName);
+}

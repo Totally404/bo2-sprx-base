@@ -14,7 +14,7 @@ int R_RegisterFont_a[2] = { Addresses::R_RegisterFont, TOC };
 int R_AddCmdDrawTextInternal_a[2] = { Addresses::R_AddCmdDrawText, TOC };
 int Material_RegisterHandle_a[2] = { Addresses::Material_RegisterHandle, TOC };
 int R_AddCmdDrawStretchPicInternal_a[2] = { Addresses::R_AddCmdDrawStretchPic, TOC };
-int R_TextWidth_t[2] = { 0x0075A338, TOC };
+int R_TextWidth_t[2] = { Addresses::R_TextWidth, TOC };
 
 void*(*R_RegisterFont)(const char * name, int imageTrack) = (void*(*)(const char*, int))&R_RegisterFont_a;
 void(*R_AddCmdDrawText)(const char* text, int maxChars, void* font, float x, float y, float yScale, float xScale, float rotation, float* colors, int Style) = (void(*)(const char*, int, void*, float, float, float, float, float, float*, int))&R_AddCmdDrawTextInternal_a;

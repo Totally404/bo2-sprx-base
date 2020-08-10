@@ -9,5 +9,6 @@ namespace Addresses{
 		Material_RegisterHandle = 0x763220,
 		R_AddCmdDrawText = 0x76A910,
 		R_AddCmdDrawStretchPic = 0x076A3E8,
+		R_TextWidth = 0x75A338,
 	};
 };
