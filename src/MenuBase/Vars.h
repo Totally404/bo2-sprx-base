@@ -48,7 +48,9 @@ struct _game {
 struct _options {
 	bool grid;
 	float fov;
+	int testIndex;
 }options;
+char * testArr[10] = { "A", "B", "C", "D" };
 
 float Red[4] = { 1, 0, 0, 1 };
 float LightRed[4] = { 1, 0, 0, 0.6f };
@@ -113,4 +115,6 @@ void setVars() {
 
 	options.grid = false;
 	options.fov = 65;
+
+	options.testIndex = 0;
 }

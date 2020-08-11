@@ -20,6 +20,7 @@ void doMenu() {
 	addBoolOption("Red Boxes", MainSub2, toggleRedBoxes, redBoxesBool());
 	addBoolOption("Red Boxes", MainSub2, toggleRedBoxes, redBoxesBool());
 	addFloatOption("FOV", MainSub2, options.fov, 10, 170, 0.5, 0);
+	addArrayOption("Test", MainSub2, testArr, 4, options.testIndex);
 
 	addOption("Pre Option 1", Pre, doNothing);
 	addSubMenu("Name", Pre, Name);

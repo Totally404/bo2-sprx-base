@@ -25,11 +25,18 @@ subMenus subChain[100];
 int scrollChain[100];
 
 //Used to store the addFloatOption arguments
-struct _floatOptions {
+struct _floatOption {
 	float* var;
 	float min, max, step;
 	bool smooth;
 }floatOption;
+
+//Used to store the addArrayOption arguments
+struct _arrayOption {
+	char* arr[100];
+	int length;
+	int* index;
+}arrayOption;
 
 enum optionTypes {
 	NullOption,
@@ -38,6 +45,7 @@ enum optionTypes {
 	BoolOption,
 	TextOption,
 	FloatOption,
+	ArrayOption,
 };
 
 optionTypes optionType;
@@ -71,7 +79,9 @@ void addOption(char* text, subMenus parentSub, void(*f)()) {
 void addTextOption(char* text, subMenus parentSub, void(*f)(), char* textOption) {
 	if (parentSub == menu.subMenu) {
 		if (menu.scroll == menu.options) { //current scroll
-			optionType = TextOption;
+			if (optionType == NullOption) {
+				optionType = TextOption;
+			}
 			drawText(textOption, menu.x + menu.width - menu.optionPadding, menu.y + menu.height + (menu.optionSpacing * (menu.options)) + menu.optionSpacing * 0.5, menu.font, menu.optionFontSize, menu.colors.primaryContrast1, 1, 0.5);
 		}
 		else {
@@ -139,13 +149,23 @@ void addFloatOption(char* text, subMenus parentSub, float &var, float min = 0, f
 			drawText(buffer, menu.x + menu.width - menu.optionPadding - sliderWidth / 2, menu.y + menu.height + (menu.optionSpacing * (menu.options)) + menu.optionSpacing * 0.5, menu.font, 0.5, White, 0.5, 0.5);
 
 		}
-		addOption(text, parentSub, doNothing);
+		addOption(text, parentSub, f);
 	}
 }
 
-
-void addArrayOption(char* text, subMenus parentSub, char* arr[], int &indexVar) {
-
+char* arropt[100];
+void addArrayOption(char* text, subMenus parentSub, char* arr[], int arrLength, int &indexVar, void(*f)() = doNothing) {
+	if (parentSub == menu.subMenu) {
+		if (menu.scroll == menu.options) { //current scroll
+			optionType = ArrayOption;
+			for (unsigned int i = 0; i < arrLength; i++) {
+				arrayOption.arr[i] = arr[i];
+			}
+			arrayOption.length = arrLength;
+			arrayOption.index = &indexVar;
+		}
+		addTextOption(text, parentSub, f, arr[indexVar]);
+	}
 }
 
 void open() {
@@ -220,6 +240,39 @@ void floatOptionMinus() {
 		*floatOption.var = floatOption.min;
 	}
 	if (!floatOption.smooth) { menu.framesPassed = 0; }
+	menuFunction();
+}
+
+void arrayOptionNext() {
+	char buffer[100];
+	sprintf(buffer, "Index: %i\nLength: %i\n", *arrayOption.index, arrayOption.length);
+	console_write(buffer);
+	if (*arrayOption.index >= arrayOption.length - 1) {
+		console_write("if");
+		*arrayOption.index = 0;
+	}
+	else {
+		console_write("else");
+		*arrayOption.index = *arrayOption.index + 1;
+	}
+	menu.framesPassed = 0;
+	menuFunction();
+}
+
+void arrayOptionPrev() {
+	console_write("arrayOptionPrev\n");
+	char buffer[100];
+	sprintf(buffer, "Index: %i\n", *arrayOption.index);
+	console_write(buffer);
+	if (*arrayOption.index > 0) {
+		console_write("if");
+		*arrayOption.index = *arrayOption.index - 1;
+	}
+	else {
+		console_write("*else");
+		*arrayOption.index = arrayOption.length - 1;
+	}
+	menu.framesPassed = 0;
 	menuFunction();
 }
 

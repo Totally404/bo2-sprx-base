@@ -40,6 +40,9 @@ void paintHook(int x, int xx) {
 				if (optionType == FloatOption) {
 					floatOptionMinus();
 				}
+				else if (optionType == ArrayOption) {
+					arrayOptionPrev();
+				}
 				else {
 					back();
 				}
@@ -47,6 +50,9 @@ void paintHook(int x, int xx) {
 			else if (isInGame() && detect(RIGHT) || !isInGame() && detect(R2)) {
 				if (optionType == FloatOption) {
 					floatOptionAdd();
+				}
+				else if (optionType == ArrayOption) {
+					arrayOptionNext();
 				}
 				else {
 					select();
