@@ -1,13 +1,22 @@
 void doMenu() {
+	int opts = min(menu.maxOptions, menu.prevOptions);
+
 	//Background
-	drawShader(menu.x, menu.y, menu.width, menu.height + (menu.optionSpacing * menu.prevOptions), menu.colors.bg);
+	drawShader(menu.x, menu.y, menu.width, menu.height + (menu.optionSpacing * opts), menu.colors.bg);
 
 	//Title
 	drawText("Menu Title", menu.x + (menu.width / 2), menu.y + menu.height / 2, menu.font, 1, menu.colors.text, 0.5, 0.5);
 
 	//Scrollbar
-	drawShader(menu.x, menu.y + menu.height + (menu.optionSpacing * menu.scroll), menu.width, menu.optionSpacing, menu.colors.primary);
+	drawShader(menu.x, menu.y + menu.height + (menu.optionSpacing * (menu.scroll - menu.scrollPos)), menu.width, menu.optionSpacing, menu.colors.primary);
 
+	//Side scrollbar
+	if (menu.prevOptions > menu.maxOptions) {
+		float vScrollThickness = 0.002;
+		drawShader(menu.x + menu.width - vScrollThickness, menu.y + menu.height, vScrollThickness, menu.optionSpacing * opts, Black);
+		drawShader(menu.x + menu.width - vScrollThickness, menu.y + menu.height + (menu.optionSpacing * opts * menu.scrollPos / menu.prevOptions), vScrollThickness, menu.optionSpacing * opts * opts / menu.prevOptions, menu.colors.primary);
+	}
+		
 	addSubMenu("Sub 1", Main, MainSub1);
 	addSubMenu("Sub 2", Main, MainSub2);
 	addSubMenu("Name", Main, Name);

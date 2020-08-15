@@ -21,8 +21,9 @@ enum subMenus {
 };
 
 struct _menu{
-	int scroll, options, prevOptions, subDepth, framesPassed;
+	int scroll, options, prevOptions, subDepth, framesPassed, scrollPos;
 	bool open;
+	int maxOptions;
 	float x, y, width, height, scale;
 	float optionPadding, optionSpacing, optionFontSize;
 	float* bgColor, accentColor;
@@ -90,6 +91,9 @@ void setVars() {
 
 	menu.scroll = 0;
 	menu.prevOptions = 0;
+	menu.scrollPos = 0;
+
+	menu.maxOptions = 18;
 
 	menu.x = 0.4;
 	menu.y = 0.4;

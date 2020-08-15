@@ -604,3 +604,7 @@ namespace Keyboard
 
 
 }
+
+int min(int a, int b) {
+	return !(b < a) ? a : b;
+}

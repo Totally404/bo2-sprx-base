@@ -23,6 +23,7 @@ subMenus subChain[100];
 
 //Used to the get the position of scroll when closing the current submenu
 int scrollChain[100];
+int scrollPosChain[100];
 
 //Used to store the addFloatOption arguments
 struct _floatOption {
@@ -53,57 +54,64 @@ optionTypes optionType;
 void openSubMenu() {
 	subChain[menu.subDepth] = menu.subMenu;
 	scrollChain[menu.subDepth] = menu.scroll;
+	scrollPosChain[menu.subDepth] = menu.scrollPos;
 	menu.subMenu = nextSub;
 	menu.subDepth++;
 	menu.scroll = 0;
+	menu.scrollPos = 0;
 }
 
-void addOption(char* text, subMenus parentSub, void(*f)()) {
+bool addOption(char* text, subMenus parentSub, void(*f)()) {
 	if (parentSub == menu.subMenu) {
-		if (menu.scroll == menu.options) { //current scroll
-			menuFunction = f;
-			if (optionType == NullOption) {
-				optionType = Option;
+		if (menu.options >= menu.scrollPos && menu.options < menu.scrollPos + menu.maxOptions) {
+			if (menu.scroll == menu.options) { //current scroll
+				menuFunction = f;
+				if (optionType == NullOption) {
+					optionType = Option;
+				}
+				//x: menu position + option padding to bring text in a bit
+				//y: menu position + header height for first option position, spacing between options * (option +1 because text gets drawn above y instead of below y like shaders) to get current option y, + an arbitrary amount that makes it line up better, should be based on font height
+				drawText(text, menu.x + menu.optionPadding, menu.y + menu.height + (menu.optionSpacing * (menu.options - menu.scrollPos)) + menu.optionSpacing * 0.5, menu.font, menu.optionFontSize, menu.colors.primaryContrast1, 0, 0.5);
 			}
-			//x: menu position + option padding to bring text in a bit
-			//y: menu position + header height for first option position, spacing between options * (option +1 because text gets drawn above y instead of below y like shaders) to get current option y, + an arbitrary amount that makes it line up better, should be based on font height
-			drawText(text, menu.x + menu.optionPadding, menu.y + menu.height + (menu.optionSpacing * (menu.options)) + menu.optionSpacing * 0.5, menu.font, menu.optionFontSize, menu.colors.primaryContrast1, 0, 0.5);
-		}
-		else {
-			drawText(text, menu.x + menu.optionPadding, menu.y + menu.height + (menu.optionSpacing * (menu.options)) + menu.optionSpacing * 0.5, menu.font, menu.optionFontSize, menu.colors.text, 0, 0.5);
+			else {
+				drawText(text, menu.x + menu.optionPadding, menu.y + menu.height + (menu.optionSpacing * (menu.options - menu.scrollPos)) + menu.optionSpacing * 0.5, menu.font, menu.optionFontSize, menu.colors.text, 0, 0.5);
+			}
+			menu.options++;
+			return true;
 		}
 		menu.options++;
 	}
+	return false;
 }
 
-void addTextOption(char* text, subMenus parentSub, void(*f)(), char* textOption) {
-	if (parentSub == menu.subMenu) {
-		if (menu.scroll == menu.options) { //current scroll
+bool addTextOption(char* text, subMenus parentSub, void(*f)(), char* textOption) {
+	if (addOption(text, parentSub, f)) {
+		if (menu.scroll == menu.options - 1) { //current scroll
 			if (optionType == NullOption) {
 				optionType = TextOption;
 			}
-			drawText(textOption, menu.x + menu.width - menu.optionPadding, menu.y + menu.height + (menu.optionSpacing * (menu.options)) + menu.optionSpacing * 0.5, menu.font, menu.optionFontSize, menu.colors.primaryContrast1, 1, 0.5);
+			drawText(textOption, menu.x + menu.width - menu.optionPadding, menu.y + menu.height + (menu.optionSpacing * (menu.options - menu.scrollPos - 1)) + menu.optionSpacing * 0.5, menu.font, menu.optionFontSize, menu.colors.primaryContrast1, 1, 0.5);
 		}
 		else {
-			drawText(textOption, menu.x + menu.width - menu.optionPadding, menu.y + menu.height + (menu.optionSpacing * (menu.options)) + menu.optionSpacing * 0.5, menu.font, menu.optionFontSize, menu.colors.text, 1, 0.5);
+			drawText(textOption, menu.x + menu.width - menu.optionPadding, menu.y + menu.height + (menu.optionSpacing * (menu.options - menu.scrollPos - 1)) + menu.optionSpacing * 0.5, menu.font, menu.optionFontSize, menu.colors.text, 1, 0.5);
 		}
-		addOption(text, parentSub, f);
+		return true;
 	}
+	return false;
 }
 
 void addSubMenu(char* text, subMenus parentSub, subMenus childSub) {
-	if (parentSub == menu.subMenu) {
-		if (menu.scroll == menu.options) { //current scroll
+	if (addTextOption(text, parentSub, openSubMenu, ">")) {
+		if (menu.scroll == menu.options - 1) { //current scroll
 			nextSub = childSub;
 			optionType = SubOption;
 		}
-		addTextOption(text, parentSub, openSubMenu, ">");
 	}
 }
 
 void addBoolOption(char* text, subMenus parentSub, void(*f)(), bool optionBool) {
-	if (parentSub == menu.subMenu) {
-		if (menu.scroll == menu.options) { //current scroll
+	if (addOption(text, parentSub, f)) {
+		if (menu.scroll == menu.options - 1) { //current scroll
 			optionType = BoolOption;
 		}
 		float shaderSize = 0.0109375;
@@ -111,11 +119,10 @@ void addBoolOption(char* text, subMenus parentSub, void(*f)(), bool optionBool) 
 		//x: current menu position + width to be right of menu, - shader size to align the right of the shader with the right side of the menu, - padding to move inwards a little
 		//y: menu position + header height for first option position, spacing between options * option to get current option y, + half of the difference between option spacing and the shader size to vertically center on the option
 		//height: *16/9 to account for screen being more wide than tall 
-		drawShader(menu.x + menu.width - shaderSize - menu.optionPadding, menu.y + menu.height + menu.optionSpacing * menu.options + (menu.optionSpacing / 2 - shaderSize), shaderSize, shaderSize * 16 / 9, Black);
+		drawShader(menu.x + menu.width - shaderSize - menu.optionPadding, menu.y + menu.height + menu.optionSpacing * (menu.options - menu.scrollPos - 1) + (menu.optionSpacing / 2 - shaderSize), shaderSize, shaderSize * 16 / 9, Black);
 		if (optionBool) {
-			drawShader(menu.x + menu.width - shaderSizeInner - menu.optionPadding - (shaderSize - shaderSizeInner) / 2, menu.y + menu.height + menu.optionSpacing * menu.options + (menu.optionSpacing / 2 - shaderSizeInner), shaderSizeInner, shaderSizeInner * 16 / 9, menu.colors.primary);
+			drawShader(menu.x + menu.width - shaderSizeInner - menu.optionPadding - (shaderSize - shaderSizeInner) / 2, menu.y + menu.height + menu.optionSpacing * (menu.options - 1) + (menu.optionSpacing / 2 - shaderSizeInner), shaderSizeInner, shaderSizeInner * 16 / 9, menu.colors.primary);
 		}
-		addOption(text, parentSub, f);
 	}
 }
 
@@ -127,36 +134,35 @@ void addBoolOption(char* text, subMenus parentSub, void(*f)(), bool optionBool) 
 /// <param name="f">Function called when the value is changed</param>
 /// <remarks></remarks>
 void addFloatOption(char* text, subMenus parentSub, float &var, float min = 0, float max = 1, float step = 0.1, int decimals = 1, bool smooth = true, void(*f)() = doNothing) {
-	if (parentSub == menu.subMenu) {
+	if (addOption(text, parentSub, f)) {
 		char buffer[64];
 		ftoa(var, buffer, decimals);
 		float sliderWidth = 0.03;
 		float sliderHeight = 0.02;
-		if (menu.scroll == menu.options) { //current scroll
+		if (menu.scroll == menu.options - 1) { //current scroll
 			optionType = FloatOption;
 			floatOption.var = &var;
 			floatOption.min = min;
 			floatOption.max = max;
 			floatOption.step = step;
 			floatOption.smooth = smooth;
-			drawShader(menu.x + menu.width - sliderWidth - menu.optionPadding, menu.y + menu.height + menu.optionSpacing * menu.options + (menu.optionSpacing / 2 - sliderHeight / 16 * 9), sliderWidth, sliderHeight, LightBlack3);
-			drawShader(menu.x + menu.width - sliderWidth - menu.optionPadding, menu.y + menu.height + menu.optionSpacing * menu.options + (menu.optionSpacing / 2 - sliderHeight / 16 * 9), (var - min) / (max - min) * sliderWidth , sliderHeight, Black);
-			drawText(buffer, menu.x + menu.width - menu.optionPadding - sliderWidth / 2, menu.y + menu.height + (menu.optionSpacing * (menu.options)) + menu.optionSpacing * 0.5, menu.font, 0.5, White, 0.5, 0.5);
+			drawShader(menu.x + menu.width - sliderWidth - menu.optionPadding, menu.y + menu.height + menu.optionSpacing * (menu.options - menu.scrollPos - 1) + (menu.optionSpacing / 2 - sliderHeight / 16 * 9), sliderWidth, sliderHeight, LightBlack3);
+			drawShader(menu.x + menu.width - sliderWidth - menu.optionPadding, menu.y + menu.height + menu.optionSpacing * (menu.options - menu.scrollPos - 1) + (menu.optionSpacing / 2 - sliderHeight / 16 * 9), (var - min) / (max - min) * sliderWidth , sliderHeight, Black);
+			drawText(buffer, menu.x + menu.width - menu.optionPadding - sliderWidth / 2, menu.y + menu.height + (menu.optionSpacing * (menu.options - menu.scrollPos - 1)) + menu.optionSpacing * 0.5, menu.font, 0.5, White, 0.5, 0.5);
 		}
 		else {
-			drawShader(menu.x + menu.width - sliderWidth - menu.optionPadding, menu.y + menu.height + menu.optionSpacing * menu.options + (menu.optionSpacing / 2 - sliderHeight / 16 * 9), sliderWidth, sliderHeight, Black);
-			drawShader(menu.x + menu.width - sliderWidth - menu.optionPadding, menu.y + menu.height + menu.optionSpacing * menu.options + (menu.optionSpacing / 2 - sliderHeight / 16 * 9), (var - min) / (max - min) * sliderWidth , sliderHeight, Grey);
-			drawText(buffer, menu.x + menu.width - menu.optionPadding - sliderWidth / 2, menu.y + menu.height + (menu.optionSpacing * (menu.options)) + menu.optionSpacing * 0.5, menu.font, 0.5, White, 0.5, 0.5);
+			drawShader(menu.x + menu.width - sliderWidth - menu.optionPadding, menu.y + menu.height + menu.optionSpacing * (menu.options - menu.scrollPos - 1) + (menu.optionSpacing / 2 - sliderHeight / 16 * 9), sliderWidth, sliderHeight, Black);
+			drawShader(menu.x + menu.width - sliderWidth - menu.optionPadding, menu.y + menu.height + menu.optionSpacing * (menu.options - menu.scrollPos - 1) + (menu.optionSpacing / 2 - sliderHeight / 16 * 9), (var - min) / (max - min) * sliderWidth , sliderHeight, Grey);
+			drawText(buffer, menu.x + menu.width - menu.optionPadding - sliderWidth / 2, menu.y + menu.height + (menu.optionSpacing * (menu.options - menu.scrollPos - 1)) + menu.optionSpacing * 0.5, menu.font, 0.5, White, 0.5, 0.5);
 
 		}
-		addOption(text, parentSub, f);
 	}
 }
 
 char* arropt[100];
 void addArrayOption(char* text, subMenus parentSub, char* arr[], int arrLength, int &indexVar, void(*f)() = doNothing) {
-	if (parentSub == menu.subMenu) {
-		if (menu.scroll == menu.options) { //current scroll
+	if (addTextOption(text, parentSub, f, arr[indexVar])) {
+		if (menu.scroll == menu.options - 1) { //current scroll
 			optionType = ArrayOption;
 			for (unsigned int i = 0; i < arrLength; i++) {
 				arrayOption.arr[i] = arr[i];
@@ -164,7 +170,6 @@ void addArrayOption(char* text, subMenus parentSub, char* arr[], int arrLength, 
 			arrayOption.length = arrLength;
 			arrayOption.index = &indexVar;
 		}
-		addTextOption(text, parentSub, f, arr[indexVar]);
 	}
 }
 
@@ -173,6 +178,7 @@ void open() {
 	if(isInGame()) menu.subMenu = Main;
 	else menu.subMenu = Pre;
 	menu.scroll = 0;
+	menu.scrollPos = 0;
 	menu.framesPassed = 0;
 	menu.subDepth = 0;
 }
@@ -194,6 +200,7 @@ void back() {
 	if (menu.subDepth > 0) {
 		menu.subMenu = subChain[menu.subDepth - 1];
 		menu.scroll = scrollChain[menu.subDepth - 1];
+		menu.scrollPos = scrollPosChain[menu.subDepth - 1];
 		menu.subDepth--;
 	}
 	else {
@@ -205,8 +212,12 @@ void back() {
 
 void scrollUp() {
 	menu.scroll--;
+	if (menu.scroll < menu.scrollPos) {
+		menu.scrollPos--;
+	}
 	if (menu.scroll < 0) {
 		menu.scroll = menu.options - 1;
+		menu.scrollPos = menu.options - min(menu.maxOptions, menu.options);
 	}
 	menu.framesPassed = 0;
 	optionType = NullOption;
@@ -214,8 +225,12 @@ void scrollUp() {
 
 void scrollDown() {
 	menu.scroll++;
+	if (menu.scroll >= menu.scrollPos + menu.maxOptions) {
+		menu.scrollPos++;
+	}
 	if (menu.scroll >= menu.options) {
 		menu.scroll = 0;
+		menu.scrollPos = 0;
 	}
 	menu.framesPassed = 0;
 	optionType = NullOption;
