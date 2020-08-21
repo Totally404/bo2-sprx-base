@@ -39,42 +39,6 @@ void toggleRedBoxes() {
 
 //Designer
 void toggleGrid() { options.grid = !options.grid; }
-void menuXPlus() {
-	menu.x += 0.005;
-}
-void menuXMinus() {
-	menu.x -= 0.005;
-}
-void menuYPlus() {
-	menu.y += 0.005 * 16/9;
-}
-void menuYMinus() {
-	menu.y -= 0.005 * 16 / 9;
-}
-void menuWidthPlus() {
-	menu.width += 0.005;
-}
-void menuWidthMinus() {
-	menu.width -= 0.005;
-}
-void menuHeightPlus() {
-	menu.height += 0.005;
-}
-void menuHeightMinus() {
-	menu.height -= 0.005;
-}
-void menuOptionSpacingPlus() {
-	menu.optionSpacing += 0.001;
-}
-void menuOptionSpacingMinus() {
-	menu.optionSpacing -= 0.001;
-}
-void fontSizePlus() {
-	menu.optionFontSize += 0.1;
-}
-void fontSizeMinus() {
-	menu.optionFontSize -= 0.1;
-}
 
 void openKeyboard(void(*f)(char*)) {
 	keyboardOpened = true;

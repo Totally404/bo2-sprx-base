@@ -23,11 +23,16 @@ enum subMenus {
 struct _menu{
 	int scroll, options, prevOptions, subDepth, framesPassed, scrollPos;
 	bool open;
-	int maxOptions;
-	float x, y, width, height, scale;
-	float optionPadding, optionSpacing, optionFontSize;
-	float* bgColor, accentColor;
 	subMenus subMenu;
+	char* infoText;
+	int infoLines;
+
+	int maxOptions;
+	float x, y, width, scale;
+	float headerHeight;
+	float footerHeight;
+	float optionPadding, optionSpacing, optionFontSize;
+	char *font;
 	struct _ncolors {
 		float* bg;
 		float* text;
@@ -35,7 +40,6 @@ struct _menu{
 		float* primaryContrast1;
 		float* primaryContrast2;
 	}colors;
-	char *font;
 }menu;
 
 struct _screen{
@@ -82,6 +86,7 @@ float mainBlueAlpha[4] = { 0, 0.67f, 0.54f, 1 };
 float LightGrey[4] = { 0.20, 0.20, 0.20, 0.95 };
 float LightBlack3[4] = { 0, 0, 0, 0.3f };
 float LightBlack5[4] = { 0, 0, 0, 0.5f };
+float LightBlack8[4] = { 0, 0, 0, 0.8f };
 float FullWhite[4] = { 1.0, 1.0f, 1.0f, 1 };
 
 void setVars() {
@@ -92,13 +97,16 @@ void setVars() {
 	menu.scroll = 0;
 	menu.prevOptions = 0;
 	menu.scrollPos = 0;
+	menu.infoText = "";
+	menu.infoLines = 0;
 
 	menu.maxOptions = 18;
 
 	menu.x = 0.4;
 	menu.y = 0.4;
 	menu.width = 0.2;
-	menu.height = 0.05;
+	menu.headerHeight = 0.05;
+	menu.footerHeight= 0.04;
 
 	menu.optionSpacing = 0.04;
 	menu.optionPadding = 0.01;
